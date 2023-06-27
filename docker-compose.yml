@@ -1,0 +1,52 @@
+version: '3'
+services:
+
+  frontend:
+    container_name: yellow-duck-frontend
+    build:
+      context: ./frontend
+      dockerfile: docker/${ENV_TYPE}/Dockerfile
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+    restart: always
+    env_file:
+      - .env
+
+  backend:
+    container_name: yellow-duck-backend
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    volumes:
+      - /var/www/html/vendor
+      - /var/www/html/storage
+      - ./backend:/var/www/html
+    restart: always
+    depends_on:
+      - mysql
+
+  nginx:
+    container_name: yellow-duck-gateway
+    restart: always
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - '8000:80'
+    depends_on:
+      - backend
+      - frontend
+
+  mysql:
+    container_name: yellow-duck-mysql
+    image: mysql:latest
+    environment:
+      - MYSQL_DATABASE=duck
+      - MYSQL_ROOT_PASSWORD=root
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+
+volumes:
+  db_data:
